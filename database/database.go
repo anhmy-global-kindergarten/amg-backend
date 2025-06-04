@@ -2,20 +2,34 @@ package database
 
 import (
 	"amg-backend/config"
+	"context"
 	"fmt"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	"time"
 )
 
-func InitDB(cfg *config.Config) (*gorm.DB, error) {
-	// PostgreSQL DSN (Data Source Name) format: host=host port=port user=user password=password dbname=dbname sslmode=disable TimeZone=UTC
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+var MongoClient *mongo.Client
+
+func InitDB(cfg *config.Config) (*mongo.Client, error) {
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s", cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort)
+
+	clientOptions := options.Client().ApplyURI(uri)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to MongoDB: %v", err)
 	}
-	log.Println("Database connected successfully.")
-	return db, nil
+
+	// Ping to verify connection
+	if err := client.Ping(ctx, nil); err != nil {
+		return nil, fmt.Errorf("MongoDB ping failed: %v", err)
+	}
+
+	log.Println("MongoDB connected successfully.")
+	MongoClient = client
+	return client, nil
 }
