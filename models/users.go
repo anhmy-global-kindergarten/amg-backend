@@ -1,14 +1,17 @@
 package models
 
-import "time"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
+)
 
-type Users struct {
-	Username     string    `json:"username" gorm:"unique;not null"`
-	Email        string    `json:"email" gorm:"unique;not null"`
-	PasswordHash string    `json:"password_hash" gorm:"not null"`
-	AvatarUrl    string    `json:"avatar_url" gorm:"default 'https://www.gravatar.com/avatar/"`
-	Bio          string    `json:"bio"`
-	Role         string    `json:"role" gorm:"default 'viewer'"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+type User struct {
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Username     string             `bson:"username" json:"username"`
+	Password     string             `bson:"password" json:"-"` // Không trả về trong JSON
+	Name         string             `bson:"name" json:"name"`
+	Role         string             `bson:"role" json:"role"` // user / admin / teacher
+	DateCreated  time.Time          `bson:"date_created" json:"date_created"`
+	DateModified time.Time          `bson:"date_modified" json:"date_modified"`
+	IsActive     bool               `bson:"is_active" json:"is_active"`
 }

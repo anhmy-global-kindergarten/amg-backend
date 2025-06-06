@@ -2,15 +2,15 @@ package auth
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type AuthHandler struct {
 	Router fiber.Router
-	DB     *gorm.DB
+	DB     *mongo.Client
 }
 
-func RegisterAuthHandler(router fiber.Router, db *gorm.DB) {
+func RegisterAuthHandler(router fiber.Router, db *mongo.Client) {
 	authHandler := AuthHandler{
 		Router: router,
 		DB:     db,
@@ -18,5 +18,6 @@ func RegisterAuthHandler(router fiber.Router, db *gorm.DB) {
 
 	// Register all endpoints here
 	router.Post("/register", authHandler.Register)
+	router.Post("/login", authHandler.Login)
 
 }

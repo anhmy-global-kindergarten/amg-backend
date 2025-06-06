@@ -1,20 +1,74 @@
 definitions:
-  auth.RegisterRequest:
+  auth.LoginRequest:
     properties:
-      email:
-        type: string
       password:
         type: string
       username:
         type: string
     type: object
+  auth.RegisterRequest:
+    properties:
+      confirm_password:
+        maxLength: 20
+        minLength: 6
+        type: string
+      name:
+        type: string
+      password:
+        maxLength: 20
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - confirm_password
+    - name
+    - password
+    - username
+    type: object
 info:
   contact: {}
-  description: Timewise database management system
-  title: timewise-dbms
+  description: AMG - AnhMy Global Kindergarten
+  title: amg-backend
   version: "1.0"
 paths:
-  /livenest/v1/auth/register:
+  /amg/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login user
+      tags:
+      - auth
+  /amg/v1/auth/register:
     post:
       consumes:
       - application/json
@@ -31,6 +85,18 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
           schema:
             additionalProperties:
               type: string

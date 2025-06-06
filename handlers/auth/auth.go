@@ -2,14 +2,23 @@ package auth
 
 import (
 	"amg-backend/models"
+	"context"
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
+	"time"
 )
 
 type RegisterRequest struct {
+	Username        string `json:"username" validate:"required"`
+	Password        string `json:"password" validate:"required,min=6,max=20"`
+	ConfirmPassword string `json:"confirm_password" validate:"required,min=6,max=20"`
+	Name            string `json:"name" validate:"required"`
+}
+
+type LoginRequest struct {
 	Username string `json:"username"`
-	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -21,43 +30,89 @@ type RegisterRequest struct {
 // @Produce json
 // @Param body body RegisterRequest true "User data"
 // @Success 200 {object} map[string]string
-// @Router /livenest/v1/auth/register [post]
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/auth/register [post]
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
-	var data map[string]string
-
-	if err := c.BodyParser(&data); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+	var req RegisterRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
 	}
 
-	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
-
-	user := models.Users{
-		Username:     data["username"],
-		Email:        data["email"],
-		PasswordHash: string(password),
-		Role:         "viewer",
+	if req.Password != req.ConfirmPassword {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Passwords do not match"})
 	}
 
-	if err := h.DB.Create(&user).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "could not create user"})
+	collection := h.DB.Database("test").Collection("test-db")
+	count, err := collection.CountDocuments(context.TODO(), bson.M{"username": req.Username})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
+	}
+	if count > 0 {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Email already exists"})
 	}
 
-	return c.JSON(fiber.Map{"message": "user created successfully"})
+	// Mã hóa mật khẩu
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to hash password"})
+	}
+
+	// Tạo user mới
+	user := models.User{
+		ID:           primitive.NewObjectID(),
+		Username:     req.Username,
+		Password:     string(hashedPassword),
+		Name:         req.Name,
+		Role:         "user",
+		IsActive:     true,
+		DateCreated:  time.Now(),
+		DateModified: time.Now(),
+	}
+
+	// Lưu vào MongoDB
+	_, err = collection.InsertOne(context.TODO(), user)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create user"})
+	}
+
+	return c.JSON(fiber.Map{"message": "User registered successfully"})
 }
 
-func (h *AuthHandler) Login(c *fiber.Ctx, db *gorm.DB) error {
-	var data map[string]string
-
-	if err := c.BodyParser(&data); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+// Login godoc
+// @Summary Login user
+// @Description Login user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body LoginRequest true "Login credentials"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /amg/v1/auth/login [post]
+func (h *AuthHandler) Login(c *fiber.Ctx) (models.User, error) {
+	var req LoginRequest
+	if err := c.BodyParser(&req); err != nil {
+		return models.User{}, c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
 	}
 
-	var user models.Users
-	db.Where("email = ?", data["email"]).First(&user)
+	// Kết nối tới collection "users"
+	collection := h.DB.Database("test").Collection("test-db")
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(data["password"])); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "incorrect password"})
+	// Tìm user theo email
+	var user models.User
+	err := collection.FindOne(context.TODO(), bson.M{"username": req.Username}).Decode(&user)
+	if err != nil {
+		return models.User{}, c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email or password incorrect"})
 	}
 
-	return c.JSON(fiber.Map{"message": "login successful"})
+	// So sánh mật khẩu
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		return models.User{}, c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email or password incorrect"})
+	}
+
+	return user, c.JSON(fiber.Map{"message": "login successful"})
 }
