@@ -26,6 +26,24 @@ definitions:
     - password
     - username
     type: object
+  models.User:
+    properties:
+      date_created:
+        type: string
+      date_modified:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      role:
+        description: user / admin / teacher
+        type: string
+      username:
+        type: string
+    type: object
 info:
   contact: {}
   description: AMG - AnhMy Global Kindergarten
@@ -36,7 +54,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Login user
+      description: Authenticate user with username and password
       parameters:
       - description: Login credentials
         in: body
@@ -50,11 +68,9 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/models.User'
         "400":
-          description: Bad Request
+          description: Invalid input
           schema:
             additionalProperties:
               type: string
