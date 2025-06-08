@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"amg-backend/config"
 	"amg-backend/models"
 	"context"
 	"github.com/gofiber/fiber/v2"
@@ -45,7 +46,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Passwords do not match"})
 	}
 
-	collection := h.DB.Database("test").Collection("test-db")
+	collection := h.DB.Database(config.DBName).Collection("User")
 	count, err := collection.CountDocuments(context.TODO(), bson.M{"username": req.Username})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
@@ -83,36 +84,36 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 
 // Login godoc
 // @Summary Login user
-// @Description Login user
+// @Description Authenticate user with username and password
 // @Tags auth
 // @Accept json
 // @Produce json
 // @Param body body LoginRequest true "Login credentials"
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
+// @Success 200 {object} models.User
+// @Failure 400 {object} map[string]string "Invalid input"
+// @Failure 401 {object} map[string]string "Unauthorized"
 // @Router /amg/v1/auth/login [post]
-func (h *AuthHandler) Login(c *fiber.Ctx) (models.User, error) {
+func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var req LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return models.User{}, c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
 	}
 
 	// Kết nối tới collection "users"
-	collection := h.DB.Database("test").Collection("test-db")
+	collection := h.DB.Database(config.DBName).Collection("User")
 
 	// Tìm user theo email
 	var user models.User
 	err := collection.FindOne(context.TODO(), bson.M{"username": req.Username}).Decode(&user)
 	if err != nil {
-		return models.User{}, c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email or password incorrect"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email or password incorrect"})
 	}
 
 	// So sánh mật khẩu
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
-		return models.User{}, c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email or password incorrect"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email or password incorrect"})
 	}
 
-	return user, c.JSON(fiber.Map{"message": "login successful"})
+	return c.JSON(user)
 }

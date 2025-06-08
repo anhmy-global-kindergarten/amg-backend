@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/amg/v1/auth/login": {
             "post": {
-                "description": "Login user",
+                "description": "Authenticate user with username and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -43,14 +43,11 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.User"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid input",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -159,6 +156,33 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 20,
                     "minLength": 6
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "date_created": {
+                    "type": "string"
+                },
+                "date_modified": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "description": "user / admin / teacher",
+                    "type": "string"
                 },
                 "username": {
                     "type": "string"

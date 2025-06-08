@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+var DBName = os.Getenv("DB.NAME")
+
 type Config struct {
 	ServerPort string
 	DBUser     string
@@ -44,5 +46,6 @@ func LoadConfig() (*Config, error) {
 		DBHost:     viper.GetString("DB.HOST"),
 		DBPort:     viper.GetString("DB.PORT"),
 	}
+	DBName = config.DBName
 	return config, nil
 }
