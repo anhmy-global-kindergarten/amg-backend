@@ -26,11 +26,51 @@ definitions:
     - password
     - username
     type: object
+  models.Candidate:
+    properties:
+      address:
+        type: string
+      create_at:
+        type: string
+      dob:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      parent_name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: string
+      student_name:
+        type: string
+      update_at:
+        type: string
+    type: object
+  models.Post:
+    properties:
+      author_id:
+        type: string
+      category:
+        type: string
+      content:
+        type: string
+      create_at:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      update_at:
+        type: string
+    type: object
   models.User:
     properties:
       date_created:
-        type: string
-      date_modified:
         type: string
       id:
         type: string
@@ -40,6 +80,8 @@ definitions:
         type: string
       role:
         description: user / admin / teacher
+        type: string
+      update_at:
         type: string
       username:
         type: string
@@ -120,4 +162,684 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /amg/v1/candidates/create-candidate:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new candidate in the database
+      parameters:
+      - description: Candidate data
+        in: body
+        name: candidate
+        required: true
+        schema:
+          $ref: '#/definitions/models.Candidate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Candidate'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new candidate
+      tags:
+      - candidate
+  /amg/v1/candidates/delete-candidate/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Deletes a candidate by its ID
+      parameters:
+      - description: Candidate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a candidate
+      tags:
+      - candidate
+  /amg/v1/candidates/get-all-candidates:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all candidates from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Candidate'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all candidates
+      tags:
+      - candidate
+  /amg/v1/candidates/get-candidate/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a candidate by its ID
+      parameters:
+      - description: Candidate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Candidate'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get candidate by ID
+      tags:
+      - candidate
+  /amg/v1/candidates/get-candidates-by-status/{status}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves candidates by their status
+      parameters:
+      - description: Candidate Status
+        in: path
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Candidate'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get candidates by status
+      tags:
+      - candidate
+  /amg/v1/candidates/recovery-candidate/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Recovers a candidate by its ID
+      parameters:
+      - description: Candidate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Recover a deleted candidate
+      tags:
+      - candidate
+  /amg/v1/candidates/update-candidate/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Updates a candidate's information by its ID
+      parameters:
+      - description: Candidate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Candidate data to update
+        in: body
+        name: candidate
+        required: true
+        schema:
+          $ref: '#/definitions/models.Candidate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a candidate
+      tags:
+      - candidate
+  /amg/v1/posts/create-post:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new post
+      parameters:
+      - description: Post data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Post'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Post'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new post
+      tags:
+      - post
+  /amg/v1/posts/delete-post/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Deletes a post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a post
+      tags:
+      - post
+  /amg/v1/posts/get-all-posts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all posts from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Post'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all posts
+      tags:
+      - post
+  /amg/v1/posts/get-post/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Post'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get post by ID
+      tags:
+      - post
+  /amg/v1/posts/get-posts-by-category/{category}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves posts by category
+      parameters:
+      - description: Post Category
+        in: path
+        name: category
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Post'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get posts by category
+      tags:
+      - post
+  /amg/v1/posts/get-posts-by-status/{status}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves posts by status
+      parameters:
+      - description: Post Status
+        in: path
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Post'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get posts by status
+      tags:
+      - post
+  /amg/v1/posts/recovery-post/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Recovers a post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Recover a deleted post
+      tags:
+      - post
+  /amg/v1/posts/update-post/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Updates a post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Post data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Post'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a post
+      tags:
+      - post
+  /amg/v1/users/deactivate-user/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Deactivates a user account by setting isActive to false
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Deactivate a user
+      tags:
+      - user
+  /amg/v1/users/get-all-user:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all users from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all users
+      tags:
+      - user
+  /amg/v1/users/get-user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user by ID
+      tags:
+      - user
+  /amg/v1/users/reactivate-user/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Reactivates a previously deactivated user account
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reactivate a user
+      tags:
+      - user
+  /amg/v1/users/update-user/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Updates user information based on the provided ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User data to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update user information
+      tags:
+      - user
 swagger: "2.0"

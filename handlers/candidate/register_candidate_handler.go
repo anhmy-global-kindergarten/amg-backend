@@ -17,12 +17,11 @@ func RegisterCandidateHandler(router fiber.Router, db *mongo.Client) {
 	}
 
 	// Register all endpoints here
-	//router.Get("/get-all-posts", postHandler.GetAllPosts)
-	//router.Get("/get-post/:id", postHandler.GetPostById)
-	//router.Get("/get-posts-by-category/:category", postHandler.GetPostsByCategory)
-	//router.Get("/get-posts-by-status/:status", postHandler.GetPostsByStatus)
-	//router.Post("/update-post/:id", postHandler.UpdatePost)
-	//router.Post("/create-post", postHandler.CreatePost)
-	//router.Post("/delete-post/:id", postHandler.DeletePost)
-	//router.Post("/recovery-post/:id", postHandler.RecoveryPost)
+	router.Get("/get-all-candidates", candidateHandler.GetAllCandidates)
+	router.Get("/get-candidate/:id", candidateHandler.GetCandidateById)
+	router.Get("/get-candidates-by-status/:status", candidateHandler.GetCandidatesByStatus)
+	router.Post("/update-candidate/:id", candidateHandler.UpdateCandidate)
+	router.Post("/create-candidate", candidateHandler.CreateCandidate)
+	router.Post("/delete-candidate/:id", candidateHandler.DeleteCandidate)
+	router.Post("/recovery-candidate/:id", candidateHandler.RecoveryCandidate)
 }

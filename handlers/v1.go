@@ -2,6 +2,8 @@ package feature
 
 import (
 	"amg-backend/handlers/auth"
+	"amg-backend/handlers/candidate"
+	"amg-backend/handlers/post"
 	"amg-backend/handlers/user"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
@@ -15,6 +17,8 @@ func RegisterHandlerV1(db *mongo.Client) *fiber.App {
 	v1 := router.Group("/amg/v1")
 	v1.Get("/swagger/*", swagger.HandlerDefault)
 	auth.RegisterAuthHandler(v1.Group("/auth"), db)
-	user.RegisterUserHandler(v1.Group("/user"), db)
+	user.RegisterUserHandler(v1.Group("/users"), db)
+	post.RegisterPostHandler(v1.Group("/posts"), db)
+	candidate.RegisterCandidateHandler(v1.Group("/candidates"), db)
 	return router
 }

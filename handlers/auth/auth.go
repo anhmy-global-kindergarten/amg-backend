@@ -63,14 +63,14 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 
 	// Tạo user mới
 	user := models.User{
-		ID:           primitive.NewObjectID(),
-		Username:     req.Username,
-		Password:     string(hashedPassword),
-		Name:         req.Name,
-		Role:         "user",
-		IsActive:     true,
-		DateCreated:  time.Now(),
-		DateModified: time.Now(),
+		ID:       primitive.NewObjectID(),
+		Username: req.Username,
+		Password: string(hashedPassword),
+		Name:     req.Name,
+		Role:     "user",
+		IsActive: true,
+		CreateAt: time.Now(),
+		UpdateAt: time.Now(),
 	}
 
 	// Lưu vào MongoDB

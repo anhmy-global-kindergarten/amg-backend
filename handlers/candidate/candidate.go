@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+// GetAllCandidates godoc
+// @Summary Get all candidates
+// @Description Retrieves all candidates from the database
+// @Tags candidate
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.Candidate
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/candidates/get-all-candidates [get]
 func (h *CandidateHandler) GetAllCandidates(c *fiber.Ctx) error {
 	var candidates []models.Candidate
 	collection := h.DB.Database(config.DBName).Collection("Candidate")
@@ -28,6 +37,18 @@ func (h *CandidateHandler) GetAllCandidates(c *fiber.Ctx) error {
 	return c.JSON(candidates)
 }
 
+// GetCandidateById godoc
+// @Summary Get candidate by ID
+// @Description Retrieves a candidate by its ID
+// @Tags candidate
+// @Accept json
+// @Produce json
+// @Param id path string true "Candidate ID"
+// @Success 200 {object} models.Candidate
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/candidates/get-candidate/{id} [get]
 func (h *CandidateHandler) GetCandidateById(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
@@ -50,6 +71,17 @@ func (h *CandidateHandler) GetCandidateById(c *fiber.Ctx) error {
 	return c.JSON(candidate)
 }
 
+// GetCandidatesByStatus godoc
+// @Summary Get candidates by status
+// @Description Retrieves candidates by their status
+// @Tags candidate
+// @Accept json
+// @Produce json
+// @Param status path string true "Candidate Status"
+// @Success 200 {array} models.Candidate
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/candidates/get-candidates-by-status/{status} [get]
 func (h *CandidateHandler) GetCandidatesByStatus(c *fiber.Ctx) error {
 	status := c.Params("status")
 	if status == "" {
@@ -76,6 +108,18 @@ func (h *CandidateHandler) GetCandidatesByStatus(c *fiber.Ctx) error {
 	return c.JSON(candidates)
 }
 
+// UpdateCandidate godoc
+// @Summary Update a candidate
+// @Description Updates a candidate's information by its ID
+// @Tags candidate
+// @Accept json
+// @Produce json
+// @Param id path string true "Candidate ID"
+// @Param candidate body models.Candidate true "Candidate data to update"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/candidates/update-candidate/{id} [post]
 func (h *CandidateHandler) UpdateCandidate(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
@@ -94,6 +138,17 @@ func (h *CandidateHandler) UpdateCandidate(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "updated"})
 }
 
+// CreateCandidate godoc
+// @Summary Create a new candidate
+// @Description Creates a new candidate in the database
+// @Tags candidate
+// @Accept json
+// @Produce json
+// @Param candidate body models.Candidate true "Candidate data"
+// @Success 200 {object} models.Candidate
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/candidates/create-candidate [post]
 func (h *CandidateHandler) CreateCandidate(c *fiber.Ctx) error {
 	var candidate models.Candidate
 	if err := c.BodyParser(&candidate); err != nil {
@@ -114,6 +169,17 @@ func (h *CandidateHandler) CreateCandidate(c *fiber.Ctx) error {
 	return c.JSON(candidate)
 }
 
+// DeleteCandidate godoc
+// @Summary Delete a candidate
+// @Description Deletes a candidate by its ID
+// @Tags candidate
+// @Accept json
+// @Produce json
+// @Param id path string true "Candidate ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/candidates/delete-candidate/{id} [post]
 func (h *CandidateHandler) DeleteCandidate(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
