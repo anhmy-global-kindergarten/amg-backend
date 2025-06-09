@@ -59,6 +59,8 @@ definitions:
         type: string
       create_at:
         type: string
+      header_image:
+        type: string
       id:
         type: string
       status:
@@ -407,15 +409,23 @@ paths:
   /amg/v1/posts/create-post:
     post:
       consumes:
-      - application/json
-      description: Creates a new post
+      - multipart/form-data
+      description: Creates a new post with title, content, and optional header image
       parameters:
-      - description: Post data
-        in: body
-        name: body
+      - description: Post Title
+        in: formData
+        name: title
         required: true
-        schema:
-          $ref: '#/definitions/models.Post'
+        type: string
+      - description: Post Content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: Header Image
+        in: formData
+        name: headerImage
+        type: file
       produces:
       - application/json
       responses:

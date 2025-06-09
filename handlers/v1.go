@@ -15,7 +15,7 @@ import (
 // @BasePath /amg/v1
 func RegisterHandlerV1(db *mongo.Client) *fiber.App {
 	router := fiber.New()
-
+	router.Static("/uploads", "./uploads")
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:3000",
 		AllowCredentials: true,

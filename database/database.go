@@ -13,7 +13,13 @@ import (
 var MongoClient *mongo.Client
 
 func InitDB(cfg *config.Config) (*mongo.Client, error) {
-	uri := fmt.Sprintf("mongodb://%s:%s", cfg.DBHost, cfg.DBPort)
+	uri := fmt.Sprintf(
+		"mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority&appName=%s",
+		cfg.DBUser,
+		cfg.DBPassword,
+		cfg.DBHost,
+		cfg.DBName,
+	)
 
 	clientOptions := options.Client().ApplyURI(uri)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

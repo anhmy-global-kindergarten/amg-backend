@@ -5,6 +5,7 @@ import (
 	"amg-backend/models"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -177,28 +178,58 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 
 // CreatePost godoc
 // @Summary Create a new post
-// @Description Creates a new post
+// @Description Creates a new post with title, content, and optional header image
 // @Tags post
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
-// @Param body body models.Post true "Post data"
+// @Param title formData string true "Post Title"
+// @Param content formData string true "Post Content"
+// @Param headerImage formData file false "Header Image"
 // @Success 200 {object} models.Post
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /amg/v1/posts/create-post [post]
 func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
-	var post models.Post
-	if err := c.BodyParser(&post); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+	// Parse multipart form
+	form, err := c.MultipartForm()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse form"})
 	}
 
-	post.ID = primitive.NewObjectID()
-	post.CreateAt = time.Now()
-	post.UpdateAt = time.Now()
-	post.Status = "active" // Default status
+	title := form.Value["title"]
+	content := form.Value["content"]
+	category := form.Value["category"]
+	author := form.Value["author"]
+
+	if len(title) == 0 || len(content) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Missing title or content"})
+	}
+
+	// Save headerImage if provided
+	var headerImagePath string
+	file, err := c.FormFile("headerImage")
+	if err == nil && file != nil {
+		savePath := fmt.Sprintf("./uploads/%s", file.Filename)
+		if err := c.SaveFile(file, savePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save image"})
+		}
+		headerImagePath = savePath
+	}
+
+	post := models.Post{
+		ID:          primitive.NewObjectID(),
+		Title:       title[0],
+		Content:     content[0],
+		Category:    category[0],
+		Author:      author[0],
+		HeaderImage: headerImagePath,
+		CreateAt:    time.Now(),
+		UpdateAt:    time.Now(),
+		Status:      "active",
+	}
 
 	collection := h.DB.Database(config.DBName).Collection("Post")
-	_, err := collection.InsertOne(context.TODO(), post)
+	_, err = collection.InsertOne(context.TODO(), post)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create post"})
 	}

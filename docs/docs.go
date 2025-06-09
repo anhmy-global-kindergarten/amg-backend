@@ -491,9 +491,9 @@ const docTemplate = `{
         },
         "/amg/v1/posts/create-post": {
             "post": {
-                "description": "Creates a new post",
+                "description": "Creates a new post with title, content, and optional header image",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -504,13 +504,24 @@ const docTemplate = `{
                 "summary": "Create a new post",
                 "parameters": [
                     {
-                        "description": "Post data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Post"
-                        }
+                        "type": "string",
+                        "description": "Post Title",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post Content",
+                        "name": "content",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Header Image",
+                        "name": "headerImage",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -1241,6 +1252,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "create_at": {
+                    "type": "string"
+                },
+                "header_image": {
                     "type": "string"
                 },
                 "id": {
