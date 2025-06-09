@@ -3,6 +3,7 @@ package post
 import (
 	"amg-backend/config"
 	"amg-backend/models"
+	"amg-backend/service"
 	"context"
 	"errors"
 	"fmt"
@@ -215,12 +216,12 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 		}
 		headerImagePath = savePath
 	}
-
+	processedContent, err := service.ProcessContentImages(content[0], config.BaseURL)
 	post := models.Post{
 		ID:          primitive.NewObjectID(),
 		Title:       title[0],
 		Content:     content[0],
-		Category:    category[0],
+		Category:    processedContent,
 		Author:      author[0],
 		HeaderImage: headerImagePath,
 		CreateAt:    time.Now(),

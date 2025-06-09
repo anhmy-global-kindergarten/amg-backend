@@ -7,6 +7,7 @@ import (
 )
 
 var DBName = os.Getenv("DB.NAME")
+var BaseURL = os.Getenv("BASE_URL")
 
 type Config struct {
 	ServerPort string
@@ -15,6 +16,7 @@ type Config struct {
 	DBName     string
 	DBHost     string
 	DBPort     string
+	BaseURL    string
 }
 
 func LoadConfig() (*Config, error) {
@@ -45,6 +47,7 @@ func LoadConfig() (*Config, error) {
 		DBName:     viper.GetString("DB.NAME"),
 		DBHost:     viper.GetString("DB.HOST"),
 		DBPort:     viper.GetString("DB.PORT"),
+		BaseURL:    viper.GetString("BASE_URL"),
 	}
 	DBName = config.DBName
 	return config, nil
