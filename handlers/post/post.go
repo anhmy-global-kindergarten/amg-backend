@@ -8,9 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"path/filepath"
 	"time"
 )
 
@@ -179,50 +181,52 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 
 // CreatePost godoc
 // @Summary Create a new post
-// @Description Creates a new post with title, content, and optional header image
+// @Description Creates a new post. The content should contain full URLs to images previously uploaded.
 // @Tags post
 // @Accept multipart/form-data
 // @Produce json
 // @Param title formData string true "Post Title"
 // @Param content formData string true "Post Content"
+// @Param category formData string true "Post Category"
+// @Param author formData string true "Post Author"
 // @Param headerImage formData file false "Header Image"
 // @Success 200 {object} models.Post
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /amg/v1/posts/create-post [post]
 func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
-	// Parse multipart form
 	form, err := c.MultipartForm()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse form"})
 	}
 
-	title := form.Value["title"]
-	content := form.Value["content"]
-	category := form.Value["category"]
-	author := form.Value["author"]
+	title := form.Value["title"][0]
+	content := form.Value["content"][0]
+	category := form.Value["category"][0]
+	author := form.Value["author"][0]
 
-	if len(title) == 0 || len(content) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Missing title or content"})
-	}
-
-	// Save headerImage if provided
 	var headerImagePath string
 	file, err := c.FormFile("headerImage")
 	if err == nil && file != nil {
-		savePath := fmt.Sprintf("./uploads/%s", file.Filename)
+		// LƯU Ý: Nên dùng tên duy nhất cho header image để tránh ghi đè
+		uniqueFilename := uuid.New().String() + filepath.Ext(file.Filename)
+		savePath := fmt.Sprintf("./uploads/%s", uniqueFilename)
 		if err := c.SaveFile(file, savePath); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save image"})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save header image"})
 		}
-		headerImagePath = savePath
+		headerImagePath = fmt.Sprintf("%s/uploads/%s", config.BaseURL, uniqueFilename)
 	}
-	processedContent, err := service.ProcessContentImages(content[0], config.BaseURL)
+
+	if err := service.MarkImagesAsUsed(h.DB, content); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": `Xảy ra lỗi khi đánh dấu ảnh đã sử dụng: ${err}`})
+	}
+
 	post := models.Post{
 		ID:          primitive.NewObjectID(),
-		Title:       title[0],
-		Content:     content[0],
-		Category:    processedContent,
-		Author:      author[0],
+		Title:       title,
+		Content:     content,
+		Category:    category,
+		Author:      author,
 		HeaderImage: headerImagePath,
 		CreateAt:    time.Now(),
 		UpdateAt:    time.Now(),
@@ -230,7 +234,7 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 	}
 
 	collection := h.DB.Database(config.DBName).Collection("Post")
-	_, err = collection.InsertOne(context.TODO(), post)
+	_, err = collection.InsertOne(context.TODO(), &post)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create post"})
 	}

@@ -51,7 +51,7 @@ definitions:
     type: object
   models.Post:
     properties:
-      author_id:
+      author:
         type: string
       category:
         type: string
@@ -406,11 +406,53 @@ paths:
       summary: Update a candidate
       tags:
       - candidate
+  /amg/v1/images/upload-image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads an image, saves it, and returns its public URL. Marks the
+        image as 'pending'.
+      parameters:
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              allOf:
+              - type: string
+              - properties:
+                  url:
+                    type: string
+                type: object
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload an image for content
+      tags:
+      - upload
   /amg/v1/posts/create-post:
     post:
       consumes:
       - multipart/form-data
-      description: Creates a new post with title, content, and optional header image
+      description: Creates a new post. The content should contain full URLs to images
+        previously uploaded.
       parameters:
       - description: Post Title
         in: formData
@@ -420,6 +462,16 @@ paths:
       - description: Post Content
         in: formData
         name: content
+        required: true
+        type: string
+      - description: Post Category
+        in: formData
+        name: category
+        required: true
+        type: string
+      - description: Post Author
+        in: formData
+        name: author
         required: true
         type: string
       - description: Header Image

@@ -50,5 +50,6 @@ func LoadConfig() (*Config, error) {
 		BaseURL:    viper.GetString("BASE_URL"),
 	}
 	DBName = config.DBName
+	BaseURL = config.BaseURL
 	return config, nil
 }

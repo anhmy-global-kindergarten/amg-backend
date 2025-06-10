@@ -481,9 +481,74 @@
                 }
             }
         },
+        "/amg/v1/images/upload-image": {
+            "post": {
+                "description": "Uploads an image, saves it, and returns its public URL. Marks the image as 'pending'.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Upload an image for content",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "allOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "url": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/amg/v1/posts/create-post": {
             "post": {
-                "description": "Creates a new post with title, content, and optional header image",
+                "description": "Creates a new post. The content should contain full URLs to images previously uploaded.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -506,6 +571,20 @@
                         "type": "string",
                         "description": "Post Content",
                         "name": "content",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post Category",
+                        "name": "category",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post Author",
+                        "name": "author",
                         "in": "formData",
                         "required": true
                     },
@@ -1234,7 +1313,7 @@
         "models.Post": {
             "type": "object",
             "properties": {
-                "author_id": {
+                "author": {
                     "type": "string"
                 },
                 "category": {

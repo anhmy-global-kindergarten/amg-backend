@@ -4,6 +4,7 @@ import (
 	"amg-backend/handlers/auth"
 	"amg-backend/handlers/candidate"
 	"amg-backend/handlers/post"
+	"amg-backend/handlers/uploaded_image"
 	"amg-backend/handlers/user"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -29,5 +30,6 @@ func RegisterHandlerV1(db *mongo.Client) *fiber.App {
 	user.RegisterUserHandler(v1.Group("/users"), db)
 	post.RegisterPostHandler(v1.Group("/posts"), db)
 	candidate.RegisterCandidateHandler(v1.Group("/candidates"), db)
+	uploaded_image.RegisterUploadedImageHandler(v1.Group("/images"), db)
 	return router
 }
