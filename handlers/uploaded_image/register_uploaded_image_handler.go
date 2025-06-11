@@ -18,4 +18,5 @@ func RegisterUploadedImageHandler(router fiber.Router, db *mongo.Client) {
 
 	// Register all endpoints here
 	router.Post("/upload-image", uploadedImageHandler.UploadContentImage)
+	router.Post("/update-status", uploadedImageHandler.UpdateImagesStatus)
 }

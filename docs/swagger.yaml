@@ -49,6 +49,14 @@ definitions:
       update_at:
         type: string
     type: object
+  models.ImageStatus:
+    enum:
+    - pending
+    - used
+    type: string
+    x-enum-varnames:
+    - ImageStatusPending
+    - ImageStatusUsed
   models.Post:
     properties:
       author:
@@ -70,6 +78,32 @@ definitions:
       update_at:
         type: string
     type: object
+  models.PostDetailResponse:
+    properties:
+      images:
+        items:
+          $ref: '#/definitions/models.UploadedImage'
+        type: array
+      post:
+        $ref: '#/definitions/models.Post'
+    type: object
+  models.UploadedImage:
+    properties:
+      createdAt:
+        type: string
+      filename:
+        type: string
+      id:
+        type: string
+      path:
+        type: string
+      status:
+        $ref: '#/definitions/models.ImageStatus'
+      style:
+        type: string
+      url:
+        type: string
+    type: object
   models.User:
     properties:
       date_created:
@@ -86,6 +120,13 @@ definitions:
       update_at:
         type: string
       username:
+        type: string
+    type: object
+  uploaded_image.UpdateImagePayload:
+    properties:
+      style:
+        type: string
+      url:
         type: string
     type: object
 info:
@@ -406,6 +447,45 @@ paths:
       summary: Update a candidate
       tags:
       - candidate
+  /amg/v1/images/update-status:
+    post:
+      consumes:
+      - application/json
+      description: Receives an array of image URLs and their styles, marks them as
+        'used' and saves their styles.
+      parameters:
+      - description: Array of images to update
+        in: body
+        name: images
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/uploaded_image.UpdateImagePayload'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update status and style of multiple images
+      tags:
+      - upload
   /amg/v1/images/upload-image:
     post:
       consumes:
@@ -575,7 +655,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Post'
+            $ref: '#/definitions/models.PostDetailResponse'
         "400":
           description: Bad Request
           schema:
@@ -594,7 +674,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Get post by ID
+      summary: Get a single post by ID with associated images
       tags:
       - post
   /amg/v1/posts/get-posts-by-category/{category}:

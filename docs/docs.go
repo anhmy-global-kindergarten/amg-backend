@@ -489,6 +489,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/amg/v1/images/update-status": {
+            "post": {
+                "description": "Receives an array of image URLs and their styles, marks them as 'used' and saves their styles.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Update status and style of multiple images",
+                "parameters": [
+                    {
+                        "description": "Array of images to update",
+                        "name": "images",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/uploaded_image.UpdateImagePayload"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/amg/v1/images/upload-image": {
             "post": {
                 "description": "Uploads an image, saves it, and returns its public URL. Marks the image as 'pending'.",
@@ -731,7 +789,7 @@ const docTemplate = `{
                 "tags": [
                     "post"
                 ],
-                "summary": "Get post by ID",
+                "summary": "Get a single post by ID with associated images",
                 "parameters": [
                     {
                         "type": "string",
@@ -745,7 +803,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Post"
+                            "$ref": "#/definitions/models.PostDetailResponse"
                         }
                     },
                     "400": {
@@ -1318,6 +1376,17 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ImageStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "used"
+            ],
+            "x-enum-varnames": [
+                "ImageStatusPending",
+                "ImageStatusUsed"
+            ]
+        },
         "models.Post": {
             "type": "object",
             "properties": {
@@ -1350,6 +1419,46 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PostDetailResponse": {
+            "type": "object",
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.UploadedImage"
+                    }
+                },
+                "post": {
+                    "$ref": "#/definitions/models.Post"
+                }
+            }
+        },
+        "models.UploadedImage": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.ImageStatus"
+                },
+                "style": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "models.User": {
             "type": "object",
             "properties": {
@@ -1373,6 +1482,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "uploaded_image.UpdateImagePayload": {
+            "type": "object",
+            "properties": {
+                "style": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }

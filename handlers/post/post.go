@@ -3,7 +3,6 @@ package post
 import (
 	"amg-backend/config"
 	"amg-backend/models"
-	"amg-backend/service"
 	"context"
 	"errors"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"path/filepath"
+	"regexp"
 	"time"
 )
 
@@ -42,13 +42,13 @@ func (h *PostHandler) GetAllPosts(c *fiber.Ctx) error {
 }
 
 // GetPostById godoc
-// @Summary Get post by ID
+// @Summary Get a single post by ID with associated images
 // @Description Retrieves a post by its ID
 // @Tags post
 // @Accept json
 // @Produce json
 // @Param id path string true "Post ID"
-// @Success 200 {object} models.Post
+// @Success 200 {object} models.PostDetailResponse
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -72,7 +72,27 @@ func (h *PostHandler) GetPostById(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "DB error"})
 	}
 
-	return c.JSON(post)
+	re := regexp.MustCompile(regexp.QuoteMeta(config.BaseURL) + `/uploads/[^"]+`)
+	imageUrls := re.FindAllString(post.Content, -1)
+
+	var relatedImages []models.UploadedImage
+	if len(imageUrls) > 0 {
+		imageCollection := h.DB.Database(config.DBName).Collection("UploadedImage")
+		filter := bson.M{"url": bson.M{"$in": imageUrls}}
+
+		cursor, err := imageCollection.Find(context.TODO(), filter)
+		if err == nil {
+			defer cursor.Close(context.TODO())
+			cursor.All(context.TODO(), &relatedImages)
+		}
+	}
+
+	response := models.PostDetailResponse{
+		Post:   post,
+		Images: relatedImages,
+	}
+
+	return c.JSON(response)
 }
 
 // GetPostsByCategory godoc
@@ -217,14 +237,16 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 		headerImagePath = fmt.Sprintf("%s/uploads/%s", config.BaseURL, uniqueFilename)
 	}
 
-	if err := service.MarkImagesAsUsed(h.DB, content); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": `Xảy ra lỗi khi đánh dấu ảnh đã sử dụng: ${err}`})
-	}
+	//if err := service.MarkImagesAsUsed(h.DB, content); err != nil {
+	//	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": `Xảy ra lỗi khi đánh dấu ảnh đã sử dụng: ${err}`})
+	//}
+
+	cleanContent := cleanImageStyles(content)
 
 	post := models.Post{
 		ID:          primitive.NewObjectID(),
 		Title:       title,
-		Content:     content,
+		Content:     cleanContent,
 		Category:    category,
 		Author:      author,
 		HeaderImage: headerImagePath,
@@ -240,6 +262,11 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(post)
+}
+
+func cleanImageStyles(htmlContent string) string {
+	re := regexp.MustCompile(`<img([^>]+)style="[^"]*"([^>]*)>`)
+	return re.ReplaceAllString(htmlContent, `<img$1$2>`)
 }
 
 // DeletePost godoc

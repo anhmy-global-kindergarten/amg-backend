@@ -18,5 +18,6 @@ type UploadedImage struct {
 	Path      string             `bson:"path" json:"path"`
 	URL       string             `bson:"url" json:"url"`
 	Status    ImageStatus        `bson:"status" json:"status"`
+	Style     string             `bson:"style,omitempty" json:"style,omitempty"`
 	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
 }

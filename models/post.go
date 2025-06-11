@@ -16,3 +16,8 @@ type Post struct {
 	UpdateAt    time.Time          `json:"update_at" bson:"update_at"`
 	Status      string             `json:"status" bson:"status"`
 }
+
+type PostDetailResponse struct {
+	Post   Post            `json:"post"`
+	Images []UploadedImage `json:"images"`
+}
