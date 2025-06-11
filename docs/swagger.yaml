@@ -785,7 +785,7 @@ paths:
   /amg/v1/posts/update-post/{id}:
     post:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Updates a post by its ID
       parameters:
       - description: Post ID

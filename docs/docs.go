@@ -999,7 +999,7 @@ const docTemplate = `{
             "post": {
                 "description": "Updates a post by its ID",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"

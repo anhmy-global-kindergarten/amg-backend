@@ -173,7 +173,7 @@ func (h *PostHandler) GetPostsByStatus(c *fiber.Ctx) error {
 // @Summary Update a post
 // @Description Updates a post by its ID
 // @Tags post
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
 // @Param id path string true "Post ID"
 // @Param body body models.Post true "Post data"
@@ -183,20 +183,60 @@ func (h *PostHandler) GetPostsByStatus(c *fiber.Ctx) error {
 // @Router /amg/v1/posts/update-post/{id} [post]
 func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 	idParam := c.Params("id")
-	id, _ := primitive.ObjectIDFromHex(idParam)
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid post ID format"})
+	}
+	form, err := c.MultipartForm()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse form"})
+	}
 
-	var updateData bson.M
-	if err := c.BodyParser(&updateData); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
+	updateData := bson.M{}
+	if titles, ok := form.Value["title"]; ok && len(titles) > 0 {
+		updateData["title"] = titles[0]
+	}
+	if contents, ok := form.Value["content"]; ok && len(contents) > 0 {
+		// Nhớ clean style của image trước khi lưu
+		updateData["content"] = contents[0]
+		//updateData["content"] = cleanImageStyles(contents[0])
+	}
+	if categories, ok := form.Value["category"]; ok && len(categories) > 0 {
+		updateData["category"] = categories[0]
+	}
+	if authors, ok := form.Value["author"]; ok && len(authors) > 0 {
+		updateData["author"] = authors[0]
+	}
+
+	// 4. Xử lý ảnh minh họa MỚI (nếu có)
+	file, err := c.FormFile("headerImage")
+	// Chỉ xử lý nếu không có lỗi và file thực sự được gửi lên
+	if err == nil && file != nil {
+		// Tạo tên file duy nhất để không bị ghi đè
+		uniqueFilename := uuid.New().String() + filepath.Ext(file.Filename)
+		savePath := fmt.Sprintf("./uploads/%s", uniqueFilename)
+
+		// Lưu file mới
+		if err := c.SaveFile(file, savePath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save new header image"})
+		}
+
+		// Cập nhật đường dẫn ảnh mới vào map updateData
+		// TODO: Xóa file ảnh cũ nếu cần để tiết kiệm dung lượng
+		newHeaderImagePath := fmt.Sprintf("%s/uploads/%s", config.BaseURL, uniqueFilename)
+		updateData["headerImage"] = newHeaderImagePath
 	}
 	updateData["update_at"] = time.Now()
-
-	collection := h.DB.Database(config.DBName).Collection("Post")
-	_, err := collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "update failed"})
+	if len(updateData) <= 1 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No update data provided"})
 	}
-	return c.JSON(fiber.Map{"message": "updated"})
+	collection := h.DB.Database(config.DBName).Collection("Post")
+	_, err = collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Update failed in database"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Post updated successfully"})
 }
 
 // CreatePost godoc
@@ -241,12 +281,12 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 	//	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": `Xảy ra lỗi khi đánh dấu ảnh đã sử dụng: ${err}`})
 	//}
 
-	cleanContent := cleanImageStyles(content)
+	//cleanContent := cleanImageStyles(content)
 
 	post := models.Post{
 		ID:          primitive.NewObjectID(),
 		Title:       title,
-		Content:     cleanContent,
+		Content:     content,
 		Category:    category,
 		Author:      author,
 		HeaderImage: headerImagePath,
