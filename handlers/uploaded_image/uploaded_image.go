@@ -42,7 +42,7 @@ func (h *UploadedImageHandler) UploadContentImage(c *fiber.Ctx) error {
 	}
 
 	// Tạo URL công khai
-	imageURL := fmt.Sprintf("%s/uploads/%s", config.BaseURL, uniqueFilename)
+	imageURL := fmt.Sprintf("/uploads/%s", uniqueFilename)
 
 	// Tạo bản ghi trong database
 	imageRecord := models.UploadedImage{

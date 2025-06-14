@@ -856,6 +856,12 @@ const docTemplate = `{
                         "name": "category",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by post status (e.g., 'published', 'draft')",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {

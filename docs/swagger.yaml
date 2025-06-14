@@ -688,6 +688,10 @@ paths:
         name: category
         required: true
         type: string
+      - description: Filter by post status (e.g., 'published', 'draft')
+        in: query
+        name: status
+        type: string
       produces:
       - application/json
       responses:

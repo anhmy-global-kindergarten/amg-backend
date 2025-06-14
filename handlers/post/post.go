@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"path/filepath"
 	"regexp"
 	"time"
@@ -102,6 +103,7 @@ func (h *PostHandler) GetPostById(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param category path string true "Post Category"
+// @Param status query string false "Filter by post status (e.g., 'published', 'draft')"
 // @Success 200 {array} models.Post
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -111,22 +113,29 @@ func (h *PostHandler) GetPostsByCategory(c *fiber.Ctx) error {
 	if category == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid category"})
 	}
-
+	status := c.Query("status")
+	filter := bson.M{
+		"category": category,
+	}
+	if status != "" {
+		filter["status"] = status
+	}
 	var posts []models.Post
 	collection := h.DB.Database(config.DBName).Collection("Post")
-	cursor, err := collection.Find(context.TODO(), bson.M{"category": category})
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "create_at", Value: -1}})
+	cursor, err := collection.Find(context.TODO(), filter, findOptions)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "DB error"})
 	}
-	// Tìm theo category
 	defer cursor.Close(context.TODO())
 
-	for cursor.Next(context.TODO()) {
-		var post models.Post
-		if err := cursor.Decode(&post); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Decode error"})
-		}
-		posts = append(posts, post)
+	if err := cursor.All(context.TODO(), &posts); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to decode posts"})
+	}
+
+	if posts == nil {
+		posts = make([]models.Post, 0)
 	}
 
 	return c.JSON(posts)
@@ -182,6 +191,7 @@ func (h *PostHandler) GetPostsByStatus(c *fiber.Ctx) error {
 // @Failure 500 {object} map[string]string
 // @Router /amg/v1/posts/update-post/{id} [post]
 func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
+	fmt.Println("--- [DEBUG] UpdatePost HANDLER TRIGGERED ---") // Log 1
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
@@ -197,7 +207,7 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 		updateData["title"] = titles[0]
 	}
 	if contents, ok := form.Value["content"]; ok && len(contents) > 0 {
-		// Nhớ clean style của image trước khi lưu
+		// Nhớ clean style của image tract khi lưu
 		updateData["content"] = contents[0]
 		//updateData["content"] = cleanImageStyles(contents[0])
 	}
@@ -209,9 +219,11 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 	}
 
 	// 4. Xử lý ảnh minh họa MỚI (nếu có)
-	file, err := c.FormFile("headerImage")
+	file, err := c.FormFile("header_image")
+	fmt.Printf("--- [DEBUG] FormFile('header_image'): file is %v, err is %v ---\n", file != nil, err) // Log 2
 	// Chỉ xử lý nếu không có lỗi và file thực sự được gửi lên
 	if err == nil && file != nil {
+		fmt.Println("--- [DEBUG] New headerImage detected, processing... ---") // Log 3
 		// Tạo tên file duy nhất để không bị ghi đè
 		uniqueFilename := uuid.New().String() + filepath.Ext(file.Filename)
 		savePath := fmt.Sprintf("./uploads/%s", uniqueFilename)
@@ -223,17 +235,24 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 
 		// Cập nhật đường dẫn ảnh mới vào map updateData
 		// TODO: Xóa file ảnh cũ nếu cần để tiết kiệm dung lượng
-		newHeaderImagePath := fmt.Sprintf("%s/uploads/%s", config.BaseURL, uniqueFilename)
-		updateData["headerImage"] = newHeaderImagePath
+		newHeaderImagePath := fmt.Sprintf("/uploads/%s", uniqueFilename)
+		updateData["header_image"] = newHeaderImagePath
 	}
-	updateData["update_at"] = time.Now()
-	if len(updateData) <= 1 {
+
+	if len(updateData) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No update data provided"})
 	}
+
+	updateData["update_at"] = time.Now()
 	collection := h.DB.Database(config.DBName).Collection("Post")
-	_, err = collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
+	updateRs, err := collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Update failed in database"})
+	}
+
+	if updateRs.ModifiedCount == 0 {
+		fmt.Println("--- [ERROR] Nothing to update ---") // Log 4
+		return c.JSON(fiber.Map{"message": "No changes detected, nothing to update"})
 	}
 
 	return c.JSON(fiber.Map{"message": "Post updated successfully"})
@@ -266,7 +285,7 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 	author := form.Value["author"][0]
 
 	var headerImagePath string
-	file, err := c.FormFile("headerImage")
+	file, err := c.FormFile("header_image")
 	if err == nil && file != nil {
 		// LƯU Ý: Nên dùng tên duy nhất cho header image để tránh ghi đè
 		uniqueFilename := uuid.New().String() + filepath.Ext(file.Filename)
@@ -274,7 +293,7 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 		if err := c.SaveFile(file, savePath); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save header image"})
 		}
-		headerImagePath = fmt.Sprintf("%s/uploads/%s", config.BaseURL, uniqueFilename)
+		headerImagePath = fmt.Sprintf("/uploads/%s", uniqueFilename)
 	}
 
 	//if err := service.MarkImagesAsUsed(h.DB, content); err != nil {
@@ -324,7 +343,7 @@ func (h *PostHandler) DeletePost(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	var updateData bson.M
+	updateData := bson.M{}
 	updateData["update_at"] = time.Now()
 	updateData["status"] = "deleted"
 

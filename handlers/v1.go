@@ -18,15 +18,15 @@ func RegisterHandlerV1(db *mongo.Client) *fiber.App {
 	router := fiber.New()
 	router.Static("/uploads", "./uploads")
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000",
-		AllowCredentials: true,
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowOrigins: "*",
+		//AllowCredentials: true,
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
 	v1 := router.Group("/amg/v1")
 	v1.Get("/swagger/*", swagger.HandlerDefault)
-	auth.RegisterAuthHandler(v1.Group("/auth"), db)
+	auth.RegisterAuthHandler(v1.Group("/auth-self"), db)
 	user.RegisterUserHandler(v1.Group("/users"), db)
 	post.RegisterPostHandler(v1.Group("/posts"), db)
 	candidate.RegisterCandidateHandler(v1.Group("/candidates"), db)
