@@ -178,6 +178,37 @@ func (h *PostHandler) GetPostsByStatus(c *fiber.Ctx) error {
 	return c.JSON(posts)
 }
 
+// GetSinglePostByCategory godoc
+// @Summary Get a single post by category
+// @Description Retrieves a single post by category
+// @Tags post
+// @Accept json
+// @Produce json
+// @Param category path string true "Post Category"
+// @Success 200 {object} models.Post
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /amg/v1/posts/get-single-post-by-category/{category} [get]
+func (h *PostHandler) GetSinglePostByCategory(c *fiber.Ctx) error {
+	category := c.Params("category")
+	if category == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid category"})
+	}
+
+	var post models.Post
+	collection := h.DB.Database(config.DBName).Collection("Post")
+	err := collection.FindOne(context.TODO(), bson.M{"category": category}).Decode(&post)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Post not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "DB error"})
+	}
+
+	return c.JSON(post)
+}
+
 // UpdatePost godoc
 // @Summary Update a post
 // @Description Updates a post by its ID
