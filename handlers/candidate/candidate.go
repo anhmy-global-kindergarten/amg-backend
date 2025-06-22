@@ -124,7 +124,7 @@ func (h *CandidateHandler) UpdateCandidate(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	var updateData bson.M
+	updateData := bson.M{}
 	if err := c.BodyParser(&updateData); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
@@ -184,7 +184,7 @@ func (h *CandidateHandler) DeleteCandidate(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	var updateData bson.M
+	updateData := bson.M{}
 	updateData["update_at"] = time.Now()
 	updateData["status"] = "deleted"
 
@@ -211,7 +211,7 @@ func (h *CandidateHandler) RecoveryCandidate(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	var updateData bson.M
+	updateData := bson.M{}
 	updateData["update_at"] = time.Now()
 	updateData["status"] = "recovered"
 

@@ -87,7 +87,7 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	var updateData bson.M
+	updateData := bson.M{}
 	if err := c.BodyParser(&updateData); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
@@ -115,9 +115,9 @@ func (h *UserHandler) DeactivateUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	var updateData bson.M
+	updateData := bson.M{}
 	updateData["update_at"] = time.Now()
-	updateData["isActive"] = false
+	updateData["is_active"] = false
 
 	collection := h.DB.Database(config.DBName).Collection("User")
 	_, err := collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
@@ -141,9 +141,9 @@ func (h *UserHandler) ReactivateUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	var updateData bson.M
+	updateData := bson.M{}
 	updateData["update_at"] = time.Now()
-	updateData["isActive"] = true
+	updateData["is_active"] = true
 
 	collection := h.DB.Database(config.DBName).Collection("User")
 	_, err := collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
