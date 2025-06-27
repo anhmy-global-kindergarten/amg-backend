@@ -86,12 +86,17 @@ func (h *UserHandler) GetUsersById(c *fiber.Ctx) error {
 func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
+	var user models.User
+	if err := c.BodyParser(&user); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
+	}
 
 	updateData := bson.M{}
 	if err := c.BodyParser(&updateData); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
 	}
 	updateData["update_at"] = time.Now()
+	updateData["role"] = user.Role
 
 	collection := h.DB.Database(config.DBName).Collection("User")
 	_, err := collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})

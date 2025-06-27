@@ -67,7 +67,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		Username: req.Username,
 		Password: string(hashedPassword),
 		Name:     req.Name,
-		Role:     "user",
+		Role:     "parent",
 		IsActive: true,
 		CreateAt: time.Now(),
 		UpdateAt: time.Now(),
@@ -107,6 +107,9 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	err := collection.FindOne(context.TODO(), bson.M{"username": req.Username}).Decode(&user)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email or password incorrect"})
+	}
+	if !user.IsActive {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ admin."})
 	}
 
 	// So sánh mật khẩu

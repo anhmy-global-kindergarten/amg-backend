@@ -3,6 +3,8 @@ package feature
 import (
 	"amg-backend/handlers/auth"
 	"amg-backend/handlers/candidate"
+	"amg-backend/handlers/comment"
+	"amg-backend/handlers/landing_page"
 	"amg-backend/handlers/post"
 	"amg-backend/handlers/uploaded_image"
 	"amg-backend/handlers/user"
@@ -31,5 +33,7 @@ func RegisterHandlerV1(db *mongo.Client) *fiber.App {
 	post.RegisterPostHandler(v1.Group("/posts"), db)
 	candidate.RegisterCandidateHandler(v1.Group("/candidates"), db)
 	uploaded_image.RegisterUploadedImageHandler(v1.Group("/images"), db)
+	landing_page.RegisterLandingPageHandler(v1.Group("/landing-page"), db)
+	comment.RegisterCommentHandler(v1.Group("/comments"), db)
 	return router
 }

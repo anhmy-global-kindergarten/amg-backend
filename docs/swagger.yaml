@@ -49,6 +49,36 @@ definitions:
       update_at:
         type: string
     type: object
+  models.Comment:
+    properties:
+      _id:
+        type: string
+      authorId:
+        type: string
+      authorName:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      postId:
+        type: string
+      status:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  models.CreateCommentPayload:
+    properties:
+      authorId:
+        type: string
+      authorName:
+        type: string
+      content:
+        type: string
+      postId:
+        type: string
+    type: object
   models.ImageStatus:
     enum:
     - pending
@@ -447,6 +477,157 @@ paths:
       summary: Update a candidate
       tags:
       - candidate
+  /amg/v1/comments/create-comment:
+    post:
+      consumes:
+      - application/json
+      description: Tạo một comment mới cho một bài viết
+      parameters:
+      - description: Dữ liệu của comment mới
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCommentPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tạo một comment mới
+      tags:
+      - Comment
+  /amg/v1/comments/delete-comment/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Đánh dấu một comment là 'deleted'
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Xóa một comment (soft delete)
+      tags:
+      - Comment
+  /amg/v1/comments/get-comments-by-post:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tất cả comment thuộc về một postId cụ thể
+      parameters:
+      - description: ID của bài viết
+        in: query
+        name: postId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Comment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy tất cả comment của một bài viết
+      tags:
+      - Comment
+  /amg/v1/comments/update-comment/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Update a comment by ID
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment data
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a comment
+      tags:
+      - Comment
   /amg/v1/images/update-status:
     post:
       consumes:
@@ -527,6 +708,71 @@ paths:
       summary: Upload an image for content
       tags:
       - upload
+  /amg/v1/landing-page/get-content:
+    get:
+      consumes:
+      - application/json
+      description: Lấy toàn bộ cấu trúc nội dung của trang landing page
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 'message: Nội dung chưa được khởi tạo'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error: Lỗi máy chủ'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy nội dung landing page
+      tags:
+      - landingpage
+  /amg/v1/landing-page/update-content:
+    post:
+      consumes:
+      - application/json
+      description: Cập nhật hoặc tạo mới toàn bộ nội dung của trang landing page
+      parameters:
+      - description: Đối tượng JSON chứa toàn bộ nội dung mới
+        in: body
+        name: content
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Cập nhật thành công'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'error: Dữ liệu không hợp lệ'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error: Lỗi máy chủ'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cập nhật nội dung landing page
+      tags:
+      - landingpage
   /amg/v1/posts/create-post:
     post:
       consumes:
@@ -749,6 +995,45 @@ paths:
               type: string
             type: object
       summary: Get posts by status
+      tags:
+      - post
+  /amg/v1/posts/get-single-post-by-category/{category}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a single post by category
+      parameters:
+      - description: Post Category
+        in: path
+        name: category
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Post'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a single post by category
       tags:
       - post
   /amg/v1/posts/recovery-post/{id}:

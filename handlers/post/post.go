@@ -222,7 +222,6 @@ func (h *PostHandler) GetSinglePostByCategory(c *fiber.Ctx) error {
 // @Failure 500 {object} map[string]string
 // @Router /amg/v1/posts/update-post/{id} [post]
 func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
-	fmt.Println("--- [DEBUG] UpdatePost HANDLER TRIGGERED ---") // Log 1
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
@@ -238,9 +237,7 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 		updateData["title"] = titles[0]
 	}
 	if contents, ok := form.Value["content"]; ok && len(contents) > 0 {
-		// Nhớ clean style của image tract khi lưu
 		updateData["content"] = contents[0]
-		//updateData["content"] = cleanImageStyles(contents[0])
 	}
 	if categories, ok := form.Value["category"]; ok && len(categories) > 0 {
 		updateData["category"] = categories[0]
@@ -249,22 +246,15 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 		updateData["author"] = authors[0]
 	}
 
-	// 4. Xử lý ảnh minh họa MỚI (nếu có)
 	file, err := c.FormFile("header_image")
-	fmt.Printf("--- [DEBUG] FormFile('header_image'): file is %v, err is %v ---\n", file != nil, err) // Log 2
-	// Chỉ xử lý nếu không có lỗi và file thực sự được gửi lên
 	if err == nil && file != nil {
-		fmt.Println("--- [DEBUG] New headerImage detected, processing... ---") // Log 3
-		// Tạo tên file duy nhất để không bị ghi đè
 		uniqueFilename := uuid.New().String() + filepath.Ext(file.Filename)
 		savePath := fmt.Sprintf("./uploads/%s", uniqueFilename)
 
-		// Lưu file mới
 		if err := c.SaveFile(file, savePath); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save new header image"})
 		}
 
-		// Cập nhật đường dẫn ảnh mới vào map updateData
 		// TODO: Xóa file ảnh cũ nếu cần để tiết kiệm dung lượng
 		newHeaderImagePath := fmt.Sprintf("/uploads/%s", uniqueFilename)
 		updateData["header_image"] = newHeaderImagePath
@@ -282,7 +272,6 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 	}
 
 	if updateRs.ModifiedCount == 0 {
-		fmt.Println("--- [ERROR] Nothing to update ---") // Log 4
 		return c.JSON(fiber.Map{"message": "No changes detected, nothing to update"})
 	}
 
@@ -318,7 +307,6 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 	var headerImagePath string
 	file, err := c.FormFile("header_image")
 	if err == nil && file != nil {
-		// LƯU Ý: Nên dùng tên duy nhất cho header image để tránh ghi đè
 		uniqueFilename := uuid.New().String() + filepath.Ext(file.Filename)
 		savePath := fmt.Sprintf("./uploads/%s", uniqueFilename)
 		if err := c.SaveFile(file, savePath); err != nil {
@@ -326,12 +314,6 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 		}
 		headerImagePath = fmt.Sprintf("/uploads/%s", uniqueFilename)
 	}
-
-	//if err := service.MarkImagesAsUsed(h.DB, content); err != nil {
-	//	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": `Xảy ra lỗi khi đánh dấu ảnh đã sử dụng: ${err}`})
-	//}
-
-	//cleanContent := cleanImageStyles(content)
 
 	post := models.Post{
 		ID:          primitive.NewObjectID(),
@@ -352,11 +334,6 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(post)
-}
-
-func cleanImageStyles(htmlContent string) string {
-	re := regexp.MustCompile(`<img([^>]+)style="[^"]*"([^>]*)>`)
-	return re.ReplaceAllString(htmlContent, `<img$1$2>`)
 }
 
 // DeletePost godoc

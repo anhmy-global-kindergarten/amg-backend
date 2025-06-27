@@ -21,3 +21,10 @@ type PostDetailResponse struct {
 	Post   Post            `json:"post"`
 	Images []UploadedImage `json:"images"`
 }
+
+type LandingPageContent struct {
+	ID        primitive.ObjectID     `bson:"_id,omitempty" json:"id,omitempty"`
+	Key       string                 `bson:"key" json:"key"`
+	Content   map[string]interface{} `bson:"content" json:"content"`
+	UpdatedAt time.Time              `bson:"updated_at" json:"updated_at"`
+}
