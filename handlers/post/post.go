@@ -12,10 +12,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
+	"os"
 	"path/filepath"
 	"regexp"
 	"time"
 )
+
+func extractImageUrls(content string) []string {
+	re := regexp.MustCompile(`src="(/uploads/[^"]+)"`)
+	matches := re.FindAllStringSubmatch(content, -1)
+	urls := make([]string, len(matches))
+	for i, match := range matches {
+		urls[i] = match[1] // Lấy group 1 là URL
+	}
+	return urls
+}
 
 // GetAllPosts godoc
 // @Summary Get all posts
@@ -232,12 +244,60 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse form"})
 	}
 
+	postCollection := h.DB.Database(config.DBName).Collection("Post")
+	imageCollection := h.DB.Database(config.DBName).Collection("UploadedImage")
+
+	var oldPost models.Post
+	if err := postCollection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&oldPost); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Post not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "DB error finding old post"})
+	}
+
+	oldImageUrls := extractImageUrls(oldPost.Content)
+	newContent := form.Value["content"][0]
+	newImageUrls := extractImageUrls(newContent)
+
+	oldUrlSet := make(map[string]bool)
+	for _, url := range oldImageUrls {
+		oldUrlSet[url] = true
+	}
+
+	newUrlSet := make(map[string]bool)
+	for _, url := range newImageUrls {
+		newUrlSet[url] = true
+	}
+
+	var removedUrls []string
+	for url := range oldUrlSet {
+		if !newUrlSet[url] {
+			removedUrls = append(removedUrls, url)
+		}
+	}
+
+	if len(removedUrls) > 0 {
+		filter := bson.M{"url": bson.M{"$in": removedUrls}}
+		update := bson.M{"$set": bson.M{"status": models.ImageStatusPending}}
+		_, err := imageCollection.UpdateMany(context.TODO(), filter, update)
+		if err != nil {
+			fmt.Printf("Warning: could not update removed images to pending: %v\n", err)
+		}
+	}
+
+	if len(newImageUrls) > 0 {
+		filter := bson.M{"url": bson.M{"$in": newImageUrls}}
+		update := bson.M{"$set": bson.M{"status": models.ImageStatusUsed}}
+		_, err := imageCollection.UpdateMany(context.TODO(), filter, update)
+		if err != nil {
+			fmt.Printf("Warning: could not update current images to used: %v\n", err)
+		}
+	}
+
 	updateData := bson.M{}
+	updateData["content"] = newContent
 	if titles, ok := form.Value["title"]; ok && len(titles) > 0 {
 		updateData["title"] = titles[0]
-	}
-	if contents, ok := form.Value["content"]; ok && len(contents) > 0 {
-		updateData["content"] = contents[0]
 	}
 	if categories, ok := form.Value["category"]; ok && len(categories) > 0 {
 		updateData["category"] = categories[0]
@@ -248,31 +308,26 @@ func (h *PostHandler) UpdatePost(c *fiber.Ctx) error {
 
 	file, err := c.FormFile("header_image")
 	if err == nil && file != nil {
+		if oldPost.HeaderImage != "" {
+			oldFilePath := "." + oldPost.HeaderImage
+			log.Printf("Deleting old header image: %s\n", oldFilePath)
+			if err := os.Remove(oldFilePath); err != nil {
+				log.Printf("Warning: could not delete old header image file %s: %v\n", oldFilePath, err)
+			}
+		}
 		uniqueFilename := uuid.New().String() + filepath.Ext(file.Filename)
 		savePath := fmt.Sprintf("./uploads/%s", uniqueFilename)
-
 		if err := c.SaveFile(file, savePath); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save new header image"})
 		}
-
-		// TODO: Xóa file ảnh cũ nếu cần để tiết kiệm dung lượng
-		newHeaderImagePath := fmt.Sprintf("/uploads/%s", uniqueFilename)
-		updateData["header_image"] = newHeaderImagePath
-	}
-
-	if len(updateData) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No update data provided"})
+		updateData["header_image"] = fmt.Sprintf("/uploads/%s", uniqueFilename)
 	}
 
 	updateData["update_at"] = time.Now()
-	collection := h.DB.Database(config.DBName).Collection("Post")
-	updateRs, err := collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
+
+	_, err = postCollection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Update failed in database"})
-	}
-
-	if updateRs.ModifiedCount == 0 {
-		return c.JSON(fiber.Map{"message": "No changes detected, nothing to update"})
 	}
 
 	return c.JSON(fiber.Map{"message": "Post updated successfully"})
@@ -327,13 +382,27 @@ func (h *PostHandler) CreatePost(c *fiber.Ctx) error {
 		Status:      "active",
 	}
 
-	collection := h.DB.Database(config.DBName).Collection("Post")
-	_, err = collection.InsertOne(context.TODO(), &post)
+	postCollection := h.DB.Database(config.DBName).Collection("Post")
+	imageCollection := h.DB.Database(config.DBName).Collection("UploadedImage")
+
+	imageUrlsInContent := extractImageUrls(content)
+
+	if len(imageUrlsInContent) > 0 {
+		filter := bson.M{"url": bson.M{"$in": imageUrlsInContent}}
+		update := bson.M{"$set": bson.M{"status": models.ImageStatusUsed}}
+		_, err := imageCollection.UpdateMany(context.TODO(), filter, update)
+		if err != nil {
+			fmt.Printf("Warning: could not update image statuses on create: %v\n", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update image statuses"})
+		}
+	}
+
+	_, err = postCollection.InsertOne(context.TODO(), &post)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create post"})
 	}
 
-	return c.JSON(post)
+	return c.Status(fiber.StatusCreated).JSON(post)
 }
 
 // DeletePost godoc
@@ -351,15 +420,36 @@ func (h *PostHandler) DeletePost(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, _ := primitive.ObjectIDFromHex(idParam)
 
-	updateData := bson.M{}
-	updateData["update_at"] = time.Now()
-	updateData["status"] = "deleted"
+	postCollection := h.DB.Database(config.DBName).Collection("Post")
+	imageCollection := h.DB.Database(config.DBName).Collection("UploadedImage")
 
-	collection := h.DB.Database(config.DBName).Collection("Post")
-	_, err := collection.UpdateByID(context.TODO(), id, bson.M{"$set": updateData})
+	var postToDelete models.Post
+	if err := postCollection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&postToDelete); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Post not found"})
+	}
+
+	imageUrlsInContent := extractImageUrls(postToDelete.Content)
+	if len(imageUrlsInContent) > 0 {
+		filter := bson.M{"url": bson.M{"$in": imageUrlsInContent}}
+		update := bson.M{"$set": bson.M{"status": models.ImageStatusPending}}
+		_, err := imageCollection.UpdateMany(context.TODO(), filter, update)
+		if err != nil {
+			fmt.Printf("Warning: could not revert image statuses on delete: %v\n", err)
+		}
+	}
+
+	updateData := bson.M{
+		"$set": bson.M{
+			"update_at": time.Now(),
+			"status":    "deleted",
+		},
+	}
+
+	_, err := postCollection.UpdateByID(context.TODO(), id, updateData)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "delete failed"})
 	}
+
 	return c.JSON(fiber.Map{"message": "deleted"})
 }
 
