@@ -10,8 +10,6 @@ import (
 )
 
 func MarkImagesAsUsed(db *mongo.Client, content string) error {
-	// Regex để tìm tất cả các URL ảnh trong thư mục uploads
-	// Ví dụ: http://localhost:8080/uploads/uuid-123.jpg
 	re := regexp.MustCompile(regexp.QuoteMeta(config.BaseURL) + `/uploads/([a-f0-9\-]+\.[a-zA-Z]+)`)
 	matches := re.FindAllStringSubmatch(content, -1)
 
@@ -34,7 +32,6 @@ func MarkImagesAsUsed(db *mongo.Client, content string) error {
 	filter := bson.M{"filename": bson.M{"$in": filenames}}
 	update := bson.M{"$set": bson.M{"status": models.ImageStatusUsed}}
 
-	// Cập nhật tất cả các ảnh tìm thấy thành "used"
 	_, err := collection.UpdateMany(context.TODO(), filter, update)
 	return err
 }

@@ -13,7 +13,7 @@ import (
 )
 
 // GetAllUsers godoc
-// @Summary Get all users
+// @Summary Get all user
 // @Description Retrieves all users from the database
 // @Tags user
 // @Accept json
@@ -59,7 +59,6 @@ func (h *UserHandler) GetUsersById(c *fiber.Ctx) error {
 	var user models.User
 	collection := h.DB.Database(config.DBName).Collection("User")
 
-	// Tìm theo _id
 	err = collection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&user)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {

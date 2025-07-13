@@ -24,7 +24,7 @@ func extractImageUrls(content string) []string {
 	matches := re.FindAllStringSubmatch(content, -1)
 	urls := make([]string, len(matches))
 	for i, match := range matches {
-		urls[i] = match[1] // Lấy group 1 là URL
+		urls[i] = match[1]
 	}
 	return urls
 }
@@ -76,7 +76,6 @@ func (h *PostHandler) GetPostById(c *fiber.Ctx) error {
 	var post models.Post
 	collection := h.DB.Database(config.DBName).Collection("Post")
 
-	// Tìm theo _id
 	err = collection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&post)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -115,7 +114,7 @@ func (h *PostHandler) GetPostById(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param category path string true "Post Category"
-// @Param status query string false "Filter by post status (e.g., 'published', 'draft')"
+// @Param status query string false "Filter by post-status (e.g., 'published', 'draft')"
 // @Success 200 {array} models.Post
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string

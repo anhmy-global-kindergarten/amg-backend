@@ -19,5 +19,7 @@ func RegisterAuthHandler(router fiber.Router, db *mongo.Client) {
 	// Register all endpoints here
 	router.Post("/register", authHandler.Register)
 	router.Post("/login", authHandler.Login)
+	router.Get("/me", authHandler.GetCurrentUser)
+	router.Post("/logout", authHandler.Logout)
 
 }

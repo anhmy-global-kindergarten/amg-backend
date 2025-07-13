@@ -12,18 +12,17 @@ import (
 )
 
 // GetCommentsByPostId godoc
-// @Summary Lấy tất cả comment của một bài viết
-// @Description Lấy tất cả comment thuộc về một postId cụ thể
+// @Summary Get comments by post-ID
+// @Description Get all comments for a specific post
 // @Tags Comment
 // @Accept json
 // @Produce json
-// @Param postId query string true "ID của bài viết"
+// @Param postId query string true "Post ID"
 // @Success 200 {array} models.Comment
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /amg/v1/comments/get-comments-by-post [get]
 func (h *CommentHandler) GetCommentsByPostId(c *fiber.Ctx) error {
-	// Lấy postId từ query parameter thay vì body
 	postId := c.Query("postId")
 	if postId == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "postId is required"})
@@ -58,23 +57,22 @@ func (h *CommentHandler) GetCommentsByPostId(c *fiber.Ctx) error {
 }
 
 // CreateComment godoc
-// @Summary Tạo một comment mới
-// @Description Tạo một comment mới cho một bài viết
+// @Summary Create a new comment
+// @Description Create a new comment for a post
 // @Tags Comment
 // @Accept json
 // @Produce json
-// @Param comment body models.CreateCommentPayload true "Dữ liệu của comment mới"
+// @Param comment body models.CreateCommentPayload true "Data to create a comment"
 // @Success 201 {object} models.Comment
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /amg/v1/comments/create-comment [post]
 func (h *CommentHandler) CreateComment(c *fiber.Ctx) error {
-	var payload models.CreateCommentPayload // Dùng payload riêng để không nhận các trường tự tạo
+	var payload models.CreateCommentPayload
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
 
-	// Validate các trường cần thiết
 	if payload.PostId == "" || payload.AuthorName == "" || payload.Content == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "postId, authorName, và content là bắt buộc"})
 	}
@@ -100,8 +98,8 @@ func (h *CommentHandler) CreateComment(c *fiber.Ctx) error {
 }
 
 // DeleteComment godoc
-// @Summary Xóa một comment (soft delete)
-// @Description Đánh dấu một comment là 'deleted'
+// @Summary Delete a comment
+// @Description Mark a comment as deleted by ID
 // @Tags Comment
 // @Accept json
 // @Produce json

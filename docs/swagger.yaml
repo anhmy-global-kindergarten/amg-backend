@@ -145,7 +145,6 @@ definitions:
       name:
         type: string
       role:
-        description: user / admin / teacher
         type: string
       update_at:
         type: string
@@ -197,6 +196,38 @@ paths:
               type: string
             type: object
       summary: Login user
+      tags:
+      - auth
+  /amg/v1/auth/logout:
+    post:
+      description: Clear the session token cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: objects
+      summary: Logout user
+      tags:
+      - auth
+  /amg/v1/auth/me:
+    get:
+      description: Get user info from session token cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get current logged-in user's info
       tags:
       - auth
   /amg/v1/auth/register:
@@ -324,7 +355,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Get all candidates
+      summary: Get all candidate
       tags:
       - candidate
   /amg/v1/candidates/get-candidate/{id}:
@@ -481,9 +512,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Tạo một comment mới cho một bài viết
+      description: Create a new comment for a post
       parameters:
-      - description: Dữ liệu của comment mới
+      - description: Data to create a comment
         in: body
         name: comment
         required: true
@@ -508,14 +539,14 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Tạo một comment mới
+      summary: Create a new comment
       tags:
       - Comment
   /amg/v1/comments/delete-comment/{id}:
     post:
       consumes:
       - application/json
-      description: Đánh dấu một comment là 'deleted'
+      description: Mark a comment as deleted by ID
       parameters:
       - description: Comment ID
         in: path
@@ -549,16 +580,16 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Xóa một comment (soft delete)
+      summary: Delete a comment
       tags:
       - Comment
   /amg/v1/comments/get-comments-by-post:
     get:
       consumes:
       - application/json
-      description: Lấy tất cả comment thuộc về một postId cụ thể
+      description: Get all comments for a specific post
       parameters:
-      - description: ID của bài viết
+      - description: Post ID
         in: query
         name: postId
         required: true
@@ -584,7 +615,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Lấy tất cả comment của một bài viết
+      summary: Get comments by post-ID
       tags:
       - Comment
   /amg/v1/comments/update-comment/{id}:
@@ -712,7 +743,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Lấy toàn bộ cấu trúc nội dung của trang landing page
+      description: Get the content of the landing page
       produces:
       - application/json
       responses:
@@ -733,16 +764,16 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Lấy nội dung landing page
+      summary: Get Landing Page Content
       tags:
-      - landingpage
+      - landing page
   /amg/v1/landing-page/update-content:
     post:
       consumes:
       - application/json
-      description: Cập nhật hoặc tạo mới toàn bộ nội dung của trang landing page
+      description: Update the content of the landing page
       parameters:
-      - description: Đối tượng JSON chứa toàn bộ nội dung mới
+      - description: Object containing the new content for the landing page
         in: body
         name: content
         required: true
@@ -753,7 +784,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: 'message: Cập nhật thành công'
+          description: 'message: "Nội dung landing page đã được cập nhật thành công'
           schema:
             additionalProperties:
               type: string
@@ -770,9 +801,9 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Cập nhật nội dung landing page
+      summary: Update Landing Page Content
       tags:
-      - landingpage
+      - landing page
   /amg/v1/posts/create-post:
     post:
       consumes:
@@ -934,7 +965,7 @@ paths:
         name: category
         required: true
         type: string
-      - description: Filter by post status (e.g., 'published', 'draft')
+      - description: Filter by post-status (e.g., 'published', 'draft')
         in: query
         name: status
         type: string
@@ -1161,7 +1192,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Get all users
+      summary: Get all user
       tags:
       - user
   /amg/v1/users/get-user/{id}:

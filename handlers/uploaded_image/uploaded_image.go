@@ -31,20 +31,16 @@ func (h *UploadedImageHandler) UploadContentImage(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Image file is required"})
 	}
 
-	// Tạo tên file duy nhất
 	ext := filepath.Ext(file.Filename)
 	uniqueFilename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
 	savePath := fmt.Sprintf("./uploads/%s", uniqueFilename)
 
-	// Lưu file vật lý
 	if err := c.SaveFile(file, savePath); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save image file"})
 	}
 
-	// Tạo URL công khai
 	imageURL := fmt.Sprintf("/uploads/%s", uniqueFilename)
 
-	// Tạo bản ghi trong database
 	imageRecord := models.UploadedImage{
 		ID:        primitive.NewObjectID(),
 		Filename:  uniqueFilename,
@@ -58,7 +54,6 @@ func (h *UploadedImageHandler) UploadContentImage(c *fiber.Ctx) error {
 	collection := h.DB.Database(config.DBName).Collection("UploadedImage")
 	_, err = collection.InsertOne(context.TODO(), &imageRecord)
 	if err != nil {
-		// Nếu không lưu được vào DB, cần cân nhắc xóa file đã lưu
 		os.Remove(savePath)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to record image metadata"})
 	}

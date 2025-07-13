@@ -13,11 +13,11 @@ import (
 )
 
 // GetLandingPageContent godoc
-// @Summary Lấy nội dung landing page
-// @Description Lấy toàn bộ cấu trúc nội dung của trang landing page
-// @Tags landingpage
-// @Accept  json
-// @Produce  json
+// @Summary Get Landing Page Content
+// @Description Get the content of the landing page
+// @Tags landing page
+// @Accept json
+// @Produce json
 // @Success 200 {object} map[string]interface{}
 // @Failure 404 {object} map[string]string "message: Nội dung chưa được khởi tạo"
 // @Failure 500 {object} map[string]string "error: Lỗi máy chủ"
@@ -40,13 +40,13 @@ func (h *LandingPageHandler) GetLandingPageContent(c *fiber.Ctx) error {
 }
 
 // UpdateLandingPageContent godoc
-// @Summary Cập nhật nội dung landing page
-// @Description Cập nhật hoặc tạo mới toàn bộ nội dung của trang landing page
-// @Tags landingpage
-// @Accept  json
-// @Produce  json
-// @Param content body map[string]interface{} true "Đối tượng JSON chứa toàn bộ nội dung mới"
-// @Success 200 {object} map[string]string "message: Cập nhật thành công"
+// @Summary Update Landing Page Content
+// @Description Update the content of the landing page
+// @Tags landing page
+// @Accept json
+// @Produce json
+// @Param content body map[string]interface{} true "Object containing the new content for the landing page"
+// @Success 200 {object} map[string]string "message: "Nội dung landing page đã được cập nhật thành công"
 // @Failure 400 {object} map[string]string "error: Dữ liệu không hợp lệ"
 // @Failure 500 {object} map[string]string "error: Lỗi máy chủ"
 // @Router /amg/v1/landing-page/update-content [post]

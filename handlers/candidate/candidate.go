@@ -13,7 +13,7 @@ import (
 )
 
 // GetAllCandidates godoc
-// @Summary Get all candidates
+// @Summary Get all candidate
 // @Description Retrieves all candidates from the database
 // @Tags candidate
 // @Accept json
@@ -59,7 +59,6 @@ func (h *CandidateHandler) GetCandidateById(c *fiber.Ctx) error {
 	var candidate models.Candidate
 	collection := h.DB.Database(config.DBName).Collection("Candidate")
 
-	// Tìm theo _id
 	err = collection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&candidate)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {

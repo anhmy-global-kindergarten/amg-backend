@@ -67,6 +67,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/amg/v1/auth/logout": {
+            "post": {
+                "description": "Clear the session token cookie",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "objects"
+                        }
+                    }
+                }
+            }
+        },
+        "/amg/v1/auth/me": {
+            "get": {
+                "description": "Get user info from session token cookie",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get current logged-in user's info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/amg/v1/auth/register": {
             "post": {
                 "description": "Register a new user",
@@ -239,7 +288,7 @@ const docTemplate = `{
                 "tags": [
                     "candidate"
                 ],
-                "summary": "Get all candidates",
+                "summary": "Get all candidate",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -491,7 +540,7 @@ const docTemplate = `{
         },
         "/amg/v1/comments/create-comment": {
             "post": {
-                "description": "Tạo một comment mới cho một bài viết",
+                "description": "Create a new comment for a post",
                 "consumes": [
                     "application/json"
                 ],
@@ -501,10 +550,10 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "Tạo một comment mới",
+                "summary": "Create a new comment",
                 "parameters": [
                     {
-                        "description": "Dữ liệu của comment mới",
+                        "description": "Data to create a comment",
                         "name": "comment",
                         "in": "body",
                         "required": true,
@@ -543,7 +592,7 @@ const docTemplate = `{
         },
         "/amg/v1/comments/delete-comment/{id}": {
             "post": {
-                "description": "Đánh dấu một comment là 'deleted'",
+                "description": "Mark a comment as deleted by ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -553,7 +602,7 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "Xóa một comment (soft delete)",
+                "summary": "Delete a comment",
                 "parameters": [
                     {
                         "type": "string",
@@ -605,7 +654,7 @@ const docTemplate = `{
         },
         "/amg/v1/comments/get-comments-by-post": {
             "get": {
-                "description": "Lấy tất cả comment thuộc về một postId cụ thể",
+                "description": "Get all comments for a specific post",
                 "consumes": [
                     "application/json"
                 ],
@@ -615,11 +664,11 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "Lấy tất cả comment của một bài viết",
+                "summary": "Get comments by post-ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID của bài viết",
+                        "description": "Post ID",
                         "name": "postId",
                         "in": "query",
                         "required": true
@@ -843,7 +892,7 @@ const docTemplate = `{
         },
         "/amg/v1/landing-page/get-content": {
             "get": {
-                "description": "Lấy toàn bộ cấu trúc nội dung của trang landing page",
+                "description": "Get the content of the landing page",
                 "consumes": [
                     "application/json"
                 ],
@@ -851,9 +900,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "landingpage"
+                    "landing page"
                 ],
-                "summary": "Lấy nội dung landing page",
+                "summary": "Get Landing Page Content",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -885,7 +934,7 @@ const docTemplate = `{
         },
         "/amg/v1/landing-page/update-content": {
             "post": {
-                "description": "Cập nhật hoặc tạo mới toàn bộ nội dung của trang landing page",
+                "description": "Update the content of the landing page",
                 "consumes": [
                     "application/json"
                 ],
@@ -893,12 +942,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "landingpage"
+                    "landing page"
                 ],
-                "summary": "Cập nhật nội dung landing page",
+                "summary": "Update Landing Page Content",
                 "parameters": [
                     {
-                        "description": "Đối tượng JSON chứa toàn bộ nội dung mới",
+                        "description": "Object containing the new content for the landing page",
                         "name": "content",
                         "in": "body",
                         "required": true,
@@ -910,7 +959,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "message: Cập nhật thành công",
+                        "description": "message: \"Nội dung landing page đã được cập nhật thành công",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1186,7 +1235,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by post status (e.g., 'published', 'draft')",
+                        "description": "Filter by post-status (e.g., 'published', 'draft')",
                         "name": "status",
                         "in": "query"
                     }
@@ -1505,7 +1554,7 @@ const docTemplate = `{
                 "tags": [
                     "user"
                 ],
-                "summary": "Get all users",
+                "summary": "Get all user",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1913,7 +1962,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "description": "user / admin / teacher",
                     "type": "string"
                 },
                 "update_at": {

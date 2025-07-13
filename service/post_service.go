@@ -98,7 +98,7 @@ func mimeTypeToExt(mimeType string) (string, bool) {
 	}
 }
 
-// Helper to save byte array to file
+// Helper to save a byte array to a file
 func saveBytesToFile(data []byte, path string) error {
 	file := http.DetectContentType(data)
 	// Simple check, you might want a more robust one

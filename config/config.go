@@ -8,6 +8,7 @@ import (
 
 var DBName = os.Getenv("DB.NAME")
 var BaseURL = os.Getenv("BASE_URL")
+var SecretKey = os.Getenv("JWT.SECRET")
 
 type Config struct {
 	ServerPort string
@@ -17,6 +18,7 @@ type Config struct {
 	DBHost     string
 	DBPort     string
 	BaseURL    string
+	SecretKey  string
 }
 
 func LoadConfig() (*Config, error) {
@@ -48,8 +50,10 @@ func LoadConfig() (*Config, error) {
 		DBHost:     viper.GetString("DB.HOST"),
 		DBPort:     viper.GetString("DB.PORT"),
 		BaseURL:    viper.GetString("BASE_URL"),
+		SecretKey:  viper.GetString("JWT.SECRET"),
 	}
 	DBName = config.DBName
 	BaseURL = config.BaseURL
+	SecretKey = config.SecretKey
 	return config, nil
 }
